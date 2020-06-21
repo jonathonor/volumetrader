@@ -1,0 +1,33 @@
+{
+  "name": "pipelines-project",
+  "version": "0.0.1",
+  "description": "A simple webapp to track project status",
+  "main": "server.js",
+  "scripts": {
+    "build": "webpack",
+    "start": "webpack && node server.js"
+  },
+  "dependencies": {
+    "axios": "^0.19.2",
+    "express": "^4.16.4",
+    "jsx-loader": "^0.13.2",
+    "lowdb": "*",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "request": "^2.88.2",
+    "webpack": "^4.30.0",
+    "webpack-cli": "^3.3.0"
+  },
+  "engines": {
+    "node": "8.x"
+  },
+  "repository": {
+    "url": ""
+  },
+  "license": "MIT",
+  "keywords": [
+    "node",
+    "glitch",
+    "express"
+  ]
+}
