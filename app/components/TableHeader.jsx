@@ -1,21 +1,30 @@
 const React = require("react");
 
-const TableHeader = function({ sortColumn, direction, setDirection, column, setColumn }) {
+const TableHeader = function({
+  sortColumn,
+  direction,
+  setDirection,
+  column,
+  setColumn
+}) {
   let headers = [
-    { title: "Ticker", key: "symbol" },
-    { title: "Latest Price", key: "latestPrice" },
-    { title: 'Todays # Over Average Volume', key: "volumeOverAverage" },
-    { title: 'Todays % Over Average Volume', key: "percentOverVolume" },
-    { title: 'Todays # Over Yesterdays Volume', key: "volumeOverYesterdays" },
-    { title: 'Volume Increase Since Last Call', key: "percentSinceLast" },
-    { title: 'Price Change Since Last Call', key: "priceSinceLast" },
-    { title: 'Volume (With Premarket)', key: "latestVolume" },
-    { title: "Volume (Since Open)", key: "volume" },
-    { title: "Yesterdays Volume", key: "previousVolume" },
-    { title: "30 Day Average Volume", key: "avgTotalVolume" },
-    { title: "Yesterdays Close Price", key: "previousClose" },
-    { title: "52 Week Low", key: "week52Low" },
-    { title: "52 Week High", key: "week52High" }
+    { title: "Ticker", key: "ticker" },
+    { title: "Price", key: "price" },
+    { title: "% Over Avg Volume", key: "abvavgpercent" },
+    { title: "% Over Y Volume", key: "abvavgypercent" },
+    { title: "Abv Avg Vol", key: "abvavgvolume" },
+    { title: "Abv Avg Y", key: "abvavgyesterday" },
+    { title: "Avg Volume", key: "avgvolume" },
+    { title: "Volume", key: "volume" },
+    { title: "$ today", key: "pricechangetoday" },
+    { title: "$ % y", key: "pricepercentsinceyesterday" },
+    { title: "52 low", key: "fiftylow" },
+    { title: "52 high", key: "fiftyhigh" },
+    { title: "Beta", key: "beta" },
+    { title: "Delay", key: "datadelay" },
+    { title: "Y Volume", key: "yesterdaysvolume" },
+    { title: "% last", key: "percentSinceLast" },
+    { title: "$ last", key: "priceSinceLast" }
   ];
 
   return (
@@ -25,9 +34,9 @@ const TableHeader = function({ sortColumn, direction, setDirection, column, setC
         return (
           <th
             onClick={() => {
-                setColumn(h.key);
-                sortColumn(h.key, direction);
-                setDirection(!direction);
+              setDirection(!direction);
+              setColumn(h.key);
+              sortColumn(h.key, direction);
             }}
           >
             <span>

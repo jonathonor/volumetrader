@@ -1,93 +1,154 @@
-// server.js
-// where your node app starts
-"use strict";
-// we've started you off with Express (https://expressjs.com/)
-// but feel free to use whatever libraries or frameworks you'd like through `package.json`.
-const express = require("express");
-const app = express();
-const apiToken = process.env.API_TOKEN;
-const testToken = process.env.TEST_TOKEN;
-const request = require("request");
-const refreshInterval = 15000;     // TODO: Update this to 600000 for real server
-let lastRequest = null;
+let port = process.env.PORT || 8000;
+let express = require("express");
+let request = require("request-promise");
+let app = express();
+let server = require("http")
+  .createServer(app)
+  .listen(port, function() {
+    console.log("Server is listening at port: ", port);
+  });
+let apiKey = process.env.API_KEY;
+const refreshInterval = 120000; // Every 2 minutes
 let nextRefreshTime = Date.now() + refreshInterval;
-let tickers = require("./tickers");
+let lastResponse = null;
+let sockets = [];
 
-// our default array of dreams
-// const tickers = ["AAPL", "GOOG", "SNAP"];
-
-// make all the files in 'public' available
-// https://expressjs.com/en/starter/static-files.html
 app.use(express.static("public"));
 
-// https://expressjs.com/en/starter/basic-routing.html
 app.get("/", (request, response) => {
   response.sendFile(__dirname + "/app/index.html");
 });
 
+let io = require("socket.io").listen(server);
+var inputs = io.of("/");
+let interval;
+let inTestMode = true;
+
+let isOpen = () => {
+  let today = new Date();
+  var startTime = "13:00:00";
+  var endTime = "20:00:00";
+
+  let currentDate = new Date();
+  let currentDate2 = new Date();
+
+  let startDate = new Date(currentDate.getTime());
+  startDate.setHours(startTime.split(":")[0]);
+  startDate.setMinutes(startTime.split(":")[1]);
+  startDate.setSeconds(startTime.split(":")[2]);
+
+  let endDate = new Date(currentDate2.getTime());
+  endDate.setHours(endTime.split(":")[0]);
+  endDate.setMinutes(endTime.split(":")[1]);
+  endDate.setSeconds(endTime.split(":")[2]);
+
+  let inTradingHours = startDate < currentDate && endDate > currentDate;
+
+  return (today.getDay() % 6 && inTradingHours) || inTestMode;
+};
+
+let updateLastRequest = () => {
+  let apiEndpoint = `https://sheets.googleapis.com/v4/spreadsheets`;
+  let documentId = `1Cl7FVblJXjfhjva2BlJ57tu1PNdB8CU-u5qWd1RC_v0`;
+  let range = `Sheet1!A1:P5`;
+
+  if (isOpen()) {
+    const options = {
+      url: `${apiEndpoint}/${documentId}/values/${range}?key=${apiKey}`,
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "Accept-Charset": "utf-8"
+      }
+    };
+
+    console.log("in trading hours, sending requests");
+    request(options)
+      .then(body => {
+        let json = JSON.parse(body);
+        let responsesAsObjects = [];
+        json.values.forEach((responseRow, i) => {
+          // the first entry contains header data
+          if (i > 0) {
+            let ticker = responseRow[0];
+            let volume = responseRow[7];
+            let price = responseRow[1];
+            let tickersLastResponse = lastResponse
+              ? lastResponse.stockData.find(i => i.ticker === ticker)
+              : null;
+            // responseRow[14] is yesterdays date (from the formula of yesterdays volume)
+
+            let percentSinceLast = lastResponse
+              ? (
+                  ((volume - tickersLastResponse.volume) / volume) *
+                  100
+                ).toFixed(2)
+              : "n/a";
+
+            let priceSinceLast = lastResponse
+              ? (price - tickersLastResponse.price).toFixed(4)
+              : "n/a";
+
+            let stockEntry = {
+              ticker,
+              price,
+              abvavgpercent: responseRow[2],
+              abvavgypercent: responseRow[3],
+              abvavgvolume: responseRow[4],
+              abvavgyesterday: responseRow[5],
+              avgvolume: responseRow[6],
+              volume,
+              pricechangetoday: responseRow[8],
+              pricepercentsinceyesterday: responseRow[9],
+              fiftylow: responseRow[10],
+              fiftyhigh: responseRow[11],
+              beta: responseRow[12],
+              datadelay: responseRow[13],
+              yesterdaysvolume: responseRow[15],
+              percentSinceLast,
+              priceSinceLast
+            };
+
+            responsesAsObjects.push(stockEntry);
+          }
+        });
+
+        nextRefreshTime = Date.now() + refreshInterval;
+        lastResponse = {
+          stockData: responsesAsObjects,
+          nextRefreshTime
+        };
+        sockets.forEach(s => s.emit("stocks", lastResponse));
+      })
+      .catch(e => {
+        console.log(e);
+      });
+  } else {
+    console.log("not in trading hours");
+    return Promise.resolve();
+  }
+};
+
+// on server start, fetch data and set up timer to continuously update request
+updateLastRequest();
 setInterval(() => {
   updateLastRequest();
 }, refreshInterval);
 
-function updateLastRequest() {
-  let thingsWanted = [
-    "symbol",
-    "latestPrice",
-    "latestVolume",
-    "previousClose",
-    "previousVolume",
-    "volume",
-    "avgTotalVolume",
-    "week52High",
-    "week52Low"
-  ];
-  const options = {
-    url: `https://sandbox.iexapis.com/v1/stock/market/batch?types=quote&symbols=${tickers.join(
-      ","
-    )}&token=${testToken}`,
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-      "Accept-Charset": "utf-8"
-    }
-  };
+inputs.on("connection", function(socket) {
+  console.log("New client connected");
+  if (interval) {
+    clearInterval(interval);
+  }
+  // emit as soon as connected
+  socket.emit("stocks", lastResponse);
 
-    request(options, function(err, res, body) {
-      if (res.statusCode === 200) {
-        let json = JSON.parse(body);
-        let transformedResponse = [];
-        Object.keys(json).forEach(tickerSymbol => {
-            let tickersLastResponse = lastRequest ? lastRequest.stockData.find(i => i.symbol === tickerSymbol) : null;
-            let filtered = Object.keys(json[tickerSymbol].quote)
-              .filter(key => thingsWanted.includes(key))
-              .reduce((obj, key) => {
-                obj[key] = json[tickerSymbol].quote[key];
-                return obj;
-              }, {});
-              let volumeOverYesterdays = filtered.latestVolume - filtered.previousVolume;
-              let volumeOverAverage = filtered.latestVolume - filtered.avgTotalVolume;
-              // Percent of daily volume increase over average volume
-              let percentOverVolume = ((volumeOverAverage / filtered.avgTotalVolume) * 100).toFixed(2);
-              let percentSinceLast = lastRequest ? (((filtered.latestVolume - tickersLastResponse.latestVolume) / filtered.latestVolume) * 100).toFixed(2) : 'n/a';
-              let priceSinceLast = lastRequest ? (filtered.latestPrice - tickersLastResponse.latestPrice).toFixed(4) : 'n/a';
-              let addedFormulas = { ...filtered, percentOverVolume, percentSinceLast, priceSinceLast, volumeOverAverage, volumeOverYesterdays };
-              transformedResponse.push(addedFormulas);
-        });
-
-        nextRefreshTime = Date.now() + refreshInterval;
-        lastRequest = { stockData: transformedResponse, nextRefreshTime, refreshInterval };
-      } else {
-        console.log(res);
-      }
-    });
-}
-
-// send the default array of dreams to the webpage
-app.get("/update", (req, response) => {
-  response.send(lastRequest);
-});
-
-// listen for requests :)
-const listener = app.listen(3333, () => {
-  console.log("Your app is listening on port " + listener.address().port);
+  // after connected, emit every 30 seconds
+  // interval = setInterval(() => getDataAndEmit(socket), 30000);
+  sockets.push(socket);
+  socket.on("disconnect", () => {
+    sockets = sockets.filter(s => s.id !== socket.id);
+    console.log("Client disconnected");
+    // clearInterval(interval);
+  });
 });

@@ -15,22 +15,58 @@
     rel="stylesheet"
     href="https://fonts.googleapis.com/css?family=Raleway"
   />
+
   <style>
+    html,
+    body,
+    .fullHeight {
+      height: 100%;
+    }
+
+    body,
+    h1 {
+      font-family: "Raleway", sans-serif;
+    }
+    body,
+    html {
+      height: 100%;
+    }
+    .bgimg {
+      background-image: url("https://www.w3schools.com/w3images/forestbridge.jpg");
+      min-height: 100%;
+      background-position: center;
+      background-size: cover;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
     #stocks {
       font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
       border-collapse: collapse;
-      width: 100%;
+      overflow: scroll;
+      table-layout: fixed;
+      max-width: none;
+      width: auto;
+      min-width: 100%;
     }
-    
-    #stocks td, #stocks th {
+
+    #stocks td,
+    #stocks th {
       border: 1px solid #ddd;
       padding: 8px;
     }
-    
-    #stocks tr:nth-child(even){background-color: #f2f2f2;}
-    
-    #stocks tr:hover {background-color: #ddd;}
-    
+
+    #stocks tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
+    #stocks tr:hover {
+      background-color: #ddd;
+    }
+
     #stocks th {
       cursor: pointer;
       padding-top: 12px;
@@ -40,8 +76,8 @@
       color: white;
       font-size: 10px;
     }
-    </style>
-  <div id="main">
+  </style>
+  <body id="main">
     <script type="text/javascript" src="/bundle.js"></script>
-  </div>
+  </body>
 </html>
