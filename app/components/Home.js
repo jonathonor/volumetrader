@@ -12,6 +12,12 @@ function Home() {
   const [direction, setDirection] = React.useState(true);
   const [nextRefreshTime, setNextRefreshTime] = React.useState("");
 
+  const previousRef = React.useRef();
+  React.useEffect(() => {
+    previousRef.col = column;
+    previousRef.dir = direction;
+  });
+
   React.useEffect(() => {
     const socket = socketIOClient(ENDPOINT);
     socket.on("stocks", data => {
@@ -21,11 +27,13 @@ function Home() {
   }, []);
 
   let sanitize = val => {
-    return val.replace(/\$|\%|,/, "");
+    return val.replace(/\$|\%|,/g, "");
   };
 
-  let sorter = (col, dir, incData) => {
-    let data = incData || [...response];
+  let sorter = (colu, diru, incData) => {
+    const col = incData && previousRef.col ? previousRef.col : colu;
+    const dir = incData && previousRef.dir ? previousRef.dir : diru;
+    let data = incData ? [...incData] : [...response];
     let stringCols = ["ticker"];
     // remove , and $
     let intCols = [
@@ -82,6 +90,7 @@ function Home() {
     if (direction) {
       data.reverse();
     }
+    setDirection(!direction);
     setResponse(data);
   };
 

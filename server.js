@@ -50,7 +50,7 @@ let isOpen = () => {
 let updateLastRequest = () => {
   let apiEndpoint = `https://sheets.googleapis.com/v4/spreadsheets`;
   let documentId = `1Cl7FVblJXjfhjva2BlJ57tu1PNdB8CU-u5qWd1RC_v0`;
-  let range = `Sheet1!A1:O5`;
+  let range = `Sheet1!A1:O497`; //O497
 
   if (isOpen()) {
     const options = {
@@ -76,16 +76,18 @@ let updateLastRequest = () => {
             let tickersLastResponse = lastResponse
               ? lastResponse.stockData.find(i => i.ticker === ticker)
               : null;
-
+            let sanitizeInt = val => {
+              return parseInt(val.replace(/\$|\%|,/g, ""));
+            }
             let percentSinceLast = tickersLastResponse
-              ? (
-                  ((volume - tickersLastResponse.volume) / volume) *
+              ? `${(
+                  ((sanitizeInt(volume) - sanitizeInt(tickersLastResponse.volume)) / sanitizeInt(volume)) *
                   100
-                ).toFixed(2)
+                ).toFixed(2)}%`
               : "n/a";
 
             let priceSinceLast = tickersLastResponse
-              ? (price - tickersLastResponse.price).toFixed(4)
+              ? (price - tickersLastResponse.price).toFixed(2)
               : "n/a";
 
             let stockEntry = {
