@@ -1,10 +1,6 @@
 const React = require("react");
 
 const TableRow = function({ stockEntry }) {
-  let addCommas = x => {
-    return x ? x.toLocaleString("en") : x;
-  };
-  console.log(stockEntry)
   return (
     <tr>
       <td>{stockEntry.ticker}</td>
@@ -16,7 +12,7 @@ const TableRow = function({ stockEntry }) {
       <td>{stockEntry.avgvolume}</td>
       <td>{stockEntry.volume}</td>
       <td>{stockEntry.pricechangetoday}</td>
-      <td>{stockEntry.pricepercentsinceyesterday}</td>
+      <td>{`${stockEntry.pricepercentsinceyesterday}%`}</td>
       <td>{`$${stockEntry.fiftylow}`}</td>
       <td>{`$${stockEntry.fiftyhigh}`}</td>
       <td>{stockEntry.beta}</td>

@@ -22,7 +22,7 @@ app.get("/", (request, response) => {
 let io = require("socket.io").listen(server);
 var inputs = io.of("/");
 let interval;
-let inTestMode = true;
+let inTestMode = false;
 
 let isOpen = () => {
   let today = new Date();
@@ -50,7 +50,7 @@ let isOpen = () => {
 let updateLastRequest = () => {
   let apiEndpoint = `https://sheets.googleapis.com/v4/spreadsheets`;
   let documentId = `1Cl7FVblJXjfhjva2BlJ57tu1PNdB8CU-u5qWd1RC_v0`;
-  let range = `Sheet1!A1:P5`;
+  let range = `Sheet1!A1:O5`;
 
   if (isOpen()) {
     const options = {
@@ -62,7 +62,7 @@ let updateLastRequest = () => {
       }
     };
 
-    console.log("in trading hours, sending requests");
+    // console.log("in trading hours, sending requests");
     request(options)
       .then(body => {
         let json = JSON.parse(body);
@@ -76,16 +76,15 @@ let updateLastRequest = () => {
             let tickersLastResponse = lastResponse
               ? lastResponse.stockData.find(i => i.ticker === ticker)
               : null;
-            // responseRow[14] is yesterdays date (from the formula of yesterdays volume)
 
-            let percentSinceLast = lastResponse
+            let percentSinceLast = tickersLastResponse
               ? (
                   ((volume - tickersLastResponse.volume) / volume) *
                   100
                 ).toFixed(2)
               : "n/a";
 
-            let priceSinceLast = lastResponse
+            let priceSinceLast = tickersLastResponse
               ? (price - tickersLastResponse.price).toFixed(4)
               : "n/a";
 
@@ -104,7 +103,7 @@ let updateLastRequest = () => {
               fiftyhigh: responseRow[11],
               beta: responseRow[12],
               datadelay: responseRow[13],
-              yesterdaysvolume: responseRow[15],
+              yesterdaysvolume: responseRow[14],
               percentSinceLast,
               priceSinceLast
             };
@@ -124,8 +123,7 @@ let updateLastRequest = () => {
         console.log(e);
       });
   } else {
-    console.log("not in trading hours");
-    return Promise.resolve();
+    // console.log("not in trading hours");
   }
 };
 

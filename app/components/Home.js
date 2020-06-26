@@ -20,14 +20,56 @@ function Home() {
     });
   }, []);
 
+  let sanitize = val => {
+    return val.replace(/\$|\%|,/, "");
+  };
+
   let sorter = (col, dir, incData) => {
     let data = incData || [...response];
     let stringCols = ["ticker"];
-    if (!stringCols.includes(col)) {
+    // remove , and $
+    let intCols = [
+      "abvavgvolume",
+      "abvavgyesterday",
+      "avgvolume",
+      "volume",
+      "datadelay",
+      "yesterdaysvolume"
+    ];
+    //remove % and $
+    let floatCols = [
+      "percentSinceLast",
+      "priceSinceLast",
+      "fiftylow",
+      "fiftyhigh",
+      "beta",
+      "price",
+      "abvavgpercent",
+      "abvavgypercent",
+      "pricechangetoday",
+      "pricepercentsinceyesterday"
+    ];
+    if (intCols.includes(col)) {
       data.sort((a, b) => {
-        if (b[col] > a[col]) {
+        let sanA = parseInt(sanitize(a[col]));
+        let sanB = parseInt(sanitize(b[col]));
+
+        if (sanB > sanA) {
           return -1;
-        } else if (b[col] < a[col]) {
+        } else if (sanB < sanA) {
+          return 1;
+        } else {
+          return 0;
+        }
+      });
+    } else if (floatCols.includes(col)) {
+      data.sort((a, b) => {
+        let sanA = parseFloat(sanitize(a[col]));
+        let sanB = parseFloat(sanitize(b[col]));
+
+        if (sanB > sanA) {
+          return -1;
+        } else if (sanB < sanA) {
           return 1;
         } else {
           return 0;
