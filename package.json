@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "axios": "^0.19.2",
-    "express": "^4.16.4",
+    "express": "^4.17.3",
     "jsx-loader": "^0.13.2",
     "lowdb": "*",
     "react": "^16.8.6",
